@@ -185,10 +185,10 @@ function run_event_proc
 		DELETE|DELETE:ISDIR) DELETE_FILE[$d]="${file%/*}"
 		    ((d++))
 		    ;;
-		MOVED_FROM) RSYNC_FILE[$r]="$file"
+		MOVED_TO) RSYNC_FILE[$r]="$file"
 		    ((r++))
 		    ;;
-		MOVED_TO) DELETE_FILE[$d]="${file%/*}"
+		MOVED_FROM) DELETE_FILE[$d]="${file%/*}"
 		    ((d++))
 		    ;;
 		*) logger "ERROR" "uncapture event found, ignore" "$event"
