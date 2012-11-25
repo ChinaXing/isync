@@ -169,6 +169,11 @@ function run_event_proc
 		logger "ERROR" "bad event found" "$event"
 		continue
 	    fi
+
+	    if [ "$file" = "./${RSYNC_TMPDIR}" ]
+	    then
+		continue
+	    fi
 	    # // process event
 	    case "$event" in 
 		ATTRIB|ATTRIB:ISDIR) RSYNC_FILE[$r]="$file"
