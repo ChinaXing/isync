@@ -305,6 +305,7 @@ function usage
 $0 -- Use inotifywait and rsync tool to sync change between two Server
 
 OPTIONS:
+   -c    configure file to source
    -t    target server to sync to
    -d    daemonize , by default isync will run in foreground
    -D    debug mode, output some detail info 
