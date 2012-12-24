@@ -325,44 +325,69 @@ EOF
 
 function init
 {
-    while getopts "t:dDl:q:p:i:r:x:T:h" OPTION
+    local Params=()
+    while getopts "c:t:dDl:q:p:i:r:x:T:h" OPTION
     do
 	case $OPTION in
+            c) echo "use Configure file:" $OPTARG
+                CONFIG_FILE=$OPTARG
+                ;;
 	    t) echo "use TARGET_SERVER:" $OPTARG
-		TARGET_SERVER=$OPTARG
+		P_TARGET_SERVER=$OPTARG
+                Params="$Params TARGET_SERVER"
 		;;
 	    d) echo "use DAEMONIZE:" 
-		DAEMONIZE=TRUE
+		P_DAEMONIZE=TRUE
+                Params="$Params DAEMONIZE"
 		;;
 	    D) echo "use DEBUG" 
-		DEBUG=TRUE
+		P_DEBUG=TRUE
+                Params="$Params DEBUG"
 		;;
 	    l) echo "use LOG_FILE:" $OPTARG
-		LOG_FILE=$OPTARG
+		P_LOG_FILE=$OPTARG
+                Params="$Params LOG_FILE"
 		;;
             q) echo "use QUEUE_FILE:" $OPTARG
-		QUEUE_FILE=$OPTARG
+		P_QUEUE_FILE=$OPTARG
+                Params="$Params QUEUE_FILE"
 		;;
 	    p) echo "use NOTIFY_PATH:" $OPTARG
-		NOTIFY_PATH=$OPTARG
+		P_NOTIFY_PATH=$OPTARG
+                Params="$Params NOTIFY_PATH"
 	        ;;
 	    i) echo "use NOTIFY_BIN:" $OPTARG
-		NOTIFY_BIN=$OPTARG
+		P_NOTIFY_BIN=$OPTARG
+                Params="$Params NOTIFY_BIN"
 	        ;;
 	    r) echo "use RSYNC_BIN:" $OPTARG
-		RSYNC_BIN=$OPTARG
+		P_RSYNC_BIN=$OPTARG
+                Params="$Params RSYNC_BIN"
 		;;
 	    x) echo "use EXECLUDE_REGEXP:" $OPTARG
-                NOTIFY_EXCLUDE=$OPTARG
+                P_NOTIFY_EXCLUDE=$OPTARG
+                Params="$Params NOTIFY_EXCLUDE"
 		;;
 	    T) echo "use RSYNC_TMPDIR:" $OPTARG
-                RSYNC_TMPDIR=$OPTARG
+                P_RSYNC_TMPDIR=$OPTARG
+                Params="$Params RSYNC_TMPDIR"
 		;;
 	    h) usage
 		;;
 	    \?) break
 		;;
 	esac
+    done
+
+    # merge conf 
+    if [ -n "$CONFIG_FILE" ] && [ -f "$CONFIG_FILE" ]
+    then
+        source $CONFIG_FILE
+    fi
+
+    for p in $Params
+    do
+        eval $p=\"\${P_$p}\"
     done
     
     # // validation
