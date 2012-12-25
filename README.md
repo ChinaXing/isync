@@ -23,4 +23,4 @@ problem
 each event trigger an rsync synchronous. Delete, create, write file will trigger sevral event, so trigger too many rsync
  proccess at a time. this maybe not suite to sence that file or directory change frequently.
  
-change to the same file may at the same time maybe casue file incorrect.
+change to the same file may at the same time in each side maybe casue file incorrect.
