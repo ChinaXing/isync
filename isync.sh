@@ -17,12 +17,11 @@ NOTIFY_FORMAT="%:e %w%f"
 RSYNC_BIN=/usr/bin/rsync
 RSYNC_TMPDIR=".irsync_rsync_tmpdir"
 RSYNC_PARAM="-aR -u"
-RSYNC_PARAM_DELETE=" -d -R --delete --delete-excluded "
+RSYNC_PARAM_DELETE=" -r --exclude='/*/*/*' -R --delete --delete-excluded "
 RSYNC_USER="isyncer"
 RSYNC_MODULE="resource"
 
-DELETE_PCOUNT=10
-RSYNC_PCOUNT=10
+RSYNC_PCOUNT=100000
 
 
 # ------- build the default variable ------- #
@@ -73,7 +72,7 @@ function get_prefix
 
 function backup_fd
 {
-    # -- backup standart input/output/err
+    # -- backup standard input/output/err
     if [[ "${BASH_VERSINFO[@]:0:2}" > "4 1" ]]
     then
 	exec {input}<&0 {output}>&1 {errput}>&2
@@ -108,10 +107,18 @@ function logger
 
 function do_rsync
 {
-    logger "INFO" "sync file" "$file"
+    logger "INFO" "sync file" "$*"
 
     backup_fd
     debug
+    if [ $DEBUG = TRUE ]
+    then
+        logger "DEBUG" "RSYNC_CMD" """
+    cd $NOTIFY_PATH && \
+        $RSYNC_BIN $RSYNC_PARAM -T ${RSYNC_TMPDIR} "$@" \
+        $RSYNC_USER@$TARGET_SERVER::$RSYNC_MODULE 
+        """
+    fi
     cd $NOTIFY_PATH && \
 	$RSYNC_BIN $RSYNC_PARAM -T ${RSYNC_TMPDIR} "$@" \
 	$RSYNC_USER@$TARGET_SERVER::$RSYNC_MODULE 
@@ -130,6 +137,14 @@ function do_delete
     logger "INFO" "delete file" "${file[@]}"
     backup_fd
     debug
+    if [ $DEBUG = TRUE ]
+    then
+        logger "DEBUG" "RSYNC_CMD" """
+    cd $NOTIFY_PATH && \
+	$RSYNC_BIN $RSYNC_PARAM_DELETE -T ${RSYNC_TMPDIR} "${file[@]}" \
+       	$RSYNC_USER@$TARGET_SERVER::$RSYNC_MODULE 
+        """
+    fi
     cd $NOTIFY_PATH && \
 	$RSYNC_BIN $RSYNC_PARAM_DELETE -T ${RSYNC_TMPDIR} "${file[@]}" \
        	$RSYNC_USER@$TARGET_SERVER::$RSYNC_MODULE 
@@ -174,6 +189,10 @@ function run_event_proc
 	    then
 		continue
 	    fi
+            if [ $DEBUG = TRUE ]
+            then
+                logger "DEBUG" "Event" "$event:$file"
+            fi
 	    # // process event
 	    case "$event" in 
 		ATTRIB|ATTRIB:ISDIR) RSYNC_FILE[$r]="$file"
@@ -196,17 +215,17 @@ function run_event_proc
 	    esac
 
 	    # // if files > parallel process at once, do real work
+	    if [ ${d} -ge $DELETE_PCOUNT ]
+	    then
+	    	do_delete "${DELETE_FILE[@]}"
+	        DELETE_FILE=""
+	        d=0
+	    fi
 	    if [ ${r} -ge $RSYNC_PCOUNT ]
 	    then
 		do_rsync "${RSYNC_FILE[@]}"
 	        RSYNC_FILE=""
 	        r=0
-	    fi
-	    if [ ${d} -ge $DELETE_PCOUNT ]
-	    then
-		do_delete "${DELETE_FILE[@]}"
-	        DELETE_FILE=""
-	        d=0
 	    fi
 	done
 	[ $r -eq 0  ] || do_rsync "${RSYNC_FILE[@]}"
